@@ -64,3 +64,31 @@ def test_fps_meter_resets_after_a_pause():
     assert meter.tick() == 0.0
     clock.step = 0.1  # resumed at 10 FPS
     assert meter.tick() == pytest.approx(10.0)
+
+
+def test_draw_hud_bottom_anchor_leaves_top_untouched():
+    image = np.full((200, 300, 3), 200, dtype=np.uint8)
+    draw_hud(image, ["12.0 FPS"], anchor="bottom-left")
+    assert (image[5, 15] == 200).all()       # top-left corner is clear
+    assert image[185, 15].mean() < 200       # panel sits at the bottom
+
+
+def test_draw_hud_rejects_unknown_anchor():
+    with pytest.raises(ValueError):
+        draw_hud(np.zeros((50, 50, 3), dtype=np.uint8), ["x"], anchor="middle")
+
+
+def test_fps_meter_is_not_inflated_by_uneven_frames():
+    gaps = iter([0.01, 0.09] * 100)  # alternating bursts: true rate is 20 FPS
+
+    class JitterClock:
+        now = 0.0
+
+        def __call__(self):
+            JitterClock.now += next(gaps)
+            return JitterClock.now
+
+    meter = FPSMeter(clock=JitterClock())
+    for _ in range(150):
+        fps = meter.tick()
+    assert fps == pytest.approx(20.0, rel=0.1)
