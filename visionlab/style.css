@@ -1,124 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap');
-
+/* Text and panels inherit Streamlit's theme colours so they stay readable if a
+   visitor switches to dark mode; only the accent and the video monitor are fixed. */
 :root {
-  --vl-teal: #40C9A2; --vl-sky: #38BDF8; --vl-violet: #A78BFA;
-  --vl-card: rgba(22, 27, 38, 0.85); --vl-border: #263042;
-  --vl-text: #F1F5F9; --vl-muted: #94A3B8;
-  --vl-gradient: linear-gradient(90deg, var(--vl-teal), var(--vl-sky), var(--vl-violet));
+  --vl-blue: #042AFF;
+  --vl-rec: #E0283C;
+  --vl-monitor: #22262E;
+  --vl-line: rgba(120, 128, 145, 0.28);
+  --vl-muted: rgba(90, 96, 112, 1);
 }
 
-[data-testid="stAppViewContainer"] {
-  background:
-    radial-gradient(1100px 520px at 0% -10%, rgba(64, 201, 162, 0.10), transparent 60%),
-    radial-gradient(900px 480px at 100% 0%, rgba(167, 139, 250, 0.10), transparent 60%),
-    #0E1117;
-}
+[data-testid="stMainBlockContainer"], .block-container { max-width: 1240px; padding-top: 2.5rem; }
 [data-testid="stHeader"] { background: transparent; }
-[data-testid="stMainBlockContainer"], .block-container { max-width: 1280px; padding-top: 2.2rem; }
 
-/* ---------- hero ---------- */
-.vl-hero {
-  position: relative; overflow: hidden;
-  padding: 30px 32px 26px; border-radius: 20px; margin-bottom: 6px;
-  background: linear-gradient(135deg, rgba(64,201,162,.13), rgba(56,189,248,.05) 45%, rgba(167,139,250,.13));
-  border: 1px solid var(--vl-border);
+/* ---------- hero: the title is "detected" like an object in a frame ---------- */
+.vl-hero { margin: 1.25rem 0 0.5rem; }
+.vl-box { position: relative; display: inline-block; padding: 0.15em 0.35em 0.05em; margin-top: 1.6rem; }
+.vl-box::after {
+  content: ""; position: absolute; inset: 0; border: 3px solid var(--vl-blue);
+  animation: vl-lock 650ms cubic-bezier(.2, .8, .2, 1) both;
 }
-.vl-hero::before {
-  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
-  background: linear-gradient(90deg, var(--vl-teal), var(--vl-sky), var(--vl-violet), var(--vl-teal));
-  background-size: 300% 100%; animation: vl-flow 6s linear infinite;
+.vl-tag {
+  position: absolute; left: 0; bottom: 100%; padding: 0.15rem 0.5rem;
+  background: var(--vl-blue); color: #fff; font-size: 0.95rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; animation: vl-fade 300ms 450ms both;
 }
-@keyframes vl-flow { to { background-position: 300% 0; } }
 .vl-title {
-  font-family: 'Space Grotesk', sans-serif; font-weight: 700; line-height: 1.05;
-  font-size: clamp(2.1rem, 4.5vw, 3.2rem); margin: 0; letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #FFFFFF 0%, var(--vl-teal) 45%, var(--vl-sky) 70%, var(--vl-violet) 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  margin: 0; padding: 0; font-size: clamp(2.4rem, 6.5vw, 4.6rem); line-height: 1;
+  font-weight: 800; font-stretch: 125%; letter-spacing: -0.015em; color: inherit;
 }
-.vl-tagline { color: #CBD5E1; font-size: 1.08rem; margin: 10px 0 16px; max-width: 62ch; }
-.vl-tagline b { color: var(--vl-text); }
-.vl-status {
-  position: absolute; top: 22px; right: 24px;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px; border-radius: 999px; font-size: .8rem; color: #CBD5E1;
-  background: rgba(14,17,23,.65); border: 1px solid var(--vl-border);
-}
-.vl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vl-teal); animation: vl-pulse 2s infinite; }
-.vl-dot.off { background: #64748B; animation: none; }
-@keyframes vl-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(64,201,162,.6); }
-  70% { box-shadow: 0 0 0 9px rgba(64,201,162,0); }
-  100% { box-shadow: 0 0 0 0 rgba(64,201,162,0); }
-}
-@media (max-width: 700px) {
-  .vl-hero { padding: 22px 18px; }
-  .vl-status { position: static; margin-bottom: 14px; }
-}
+@keyframes vl-lock { from { transform: scale(1.12); opacity: 0; } 60% { opacity: 1; } to { transform: none; } }
+@keyframes vl-fade { from { opacity: 0; } }
+.vl-lede { font-size: 1.2rem; line-height: 1.5; max-width: 58ch; margin: 1.1rem 0 0.35rem; }
+.vl-meta { color: var(--vl-muted); font-size: 0.92rem; margin: 0; }
 
-/* ---------- chips ---------- */
-.vl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.vl-chip {
-  font-size: .78rem; padding: 4px 11px; border-radius: 999px;
-  border: 1px solid var(--vl-border); background: rgba(255,255,255,.03); color: #CBD5E1;
-}
-.vl-det {
-  font-size: .85rem; padding: 5px 12px; border-radius: 999px; color: var(--vl-text);
-  background: rgba(64,201,162,.12); border: 1px solid rgba(64,201,162,.45);
-}
-.vl-det b { color: var(--vl-teal); margin-left: 4px; }
+/* ---------- live readout ---------- */
+.vl-readout { border: 1px solid var(--vl-line); border-radius: 6px; padding: 1.1rem 1.25rem 1.2rem; margin-bottom: 1rem; }
+.vl-readout h3 { margin: 0 0 0.15rem; padding: 0; font-size: 1.15rem; font-weight: 700; font-stretch: 112%; }
+.vl-model { color: var(--vl-muted); font-size: 0.9rem; margin: 0 0 1rem; }
+.vl-state { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 0.8rem; }
+.vl-rec { width: 10px; height: 10px; border-radius: 50%; background: #9AA0AD; }
+.vl-rec.on { background: var(--vl-rec); animation: vl-blink 1.6s ease-in-out infinite; }
+@keyframes vl-blink { 50% { opacity: 0.35; } }
+.vl-figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; padding: 0.8rem 0; border-block: 1px solid var(--vl-line); }
+.vl-fig b { display: block; white-space: nowrap; font-size: 1.9rem; line-height: 1.1; font-weight: 700; font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.vl-fig b small { font-size: 0.5em; font-weight: 600; }
+.vl-fig span { color: var(--vl-muted); font-size: 0.82rem; }
+.vl-legend { list-style: none; margin: 0.9rem 0 0; padding: 0; }
+.vl-legend li { display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0; margin: 0; }
+.vl-legend i { width: 0.85rem; height: 0.85rem; border-radius: 2px; flex: none; }
+.vl-legend b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.vl-note { color: var(--vl-muted); margin: 0.9rem 0 0; }
+.vl-tips h4 { margin: 0 0 0.4rem; padding: 0; font-size: 1rem; font-weight: 700; }
+.vl-tips ul { margin: 0; padding-left: 1.1rem; }
+.vl-tips li { margin-bottom: 0.35rem; }
+.vl-tips li::marker { color: var(--vl-blue); }
+iframe[title*="webrtc"] { border-radius: 6px; }
 
-/* ---------- tabs ---------- */
-.stTabs [role="tablist"] { gap: 8px; border-bottom: none; box-shadow: none; margin-bottom: 8px; }
-.stTabs [role="tab"] {
-  height: auto; padding: 7px 16px; border-radius: 999px; border: 1px solid var(--vl-border);
-  background: var(--vl-card); transition: border-color .15s, background .15s;
-}
-.stTabs [role="tab"]:hover { border-color: #3B4A63; }
-.stTabs [role="tab"] * { border-bottom: none !important; }
-.stTabs .react-aria-SelectionIndicator { display: none; }
-.stTabs [role="tab"][aria-selected="true"] { background: rgba(64,201,162,.14); border-color: var(--vl-teal); }
-.stTabs [role="tablist"]::after, .stTabs [role="tab"]::after, .stTabs [role="tab"]::before { display: none; }
-.stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none; }
+/* ---------- how it works: a real 4-step sequence, so it is numbered ---------- */
+.vl-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 0.5rem 0 2rem; }
+.vl-step { border-top: 3px solid currentColor; padding-top: 0.75rem; }
+.vl-step-n { color: var(--vl-blue); font-size: 1.6rem; font-weight: 800; font-stretch: 125%; }
+.vl-step h4 { margin: 0.2rem 0 0.35rem; padding: 0; font-size: 1.05rem; }
+.vl-step p { margin: 0; line-height: 1.5; }
 
-/* ---------- cards ---------- */
-.vl-card {
-  background: var(--vl-card); border: 1px solid var(--vl-border);
-  border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 14px;
-}
-.vl-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.vl-icon {
-  font-size: 1.4rem; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
-  background: linear-gradient(135deg, rgba(64,201,162,.25), rgba(167,139,250,.25));
-}
-.vl-card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 1.1rem; color: var(--vl-text); }
-.vl-card-sub { color: var(--vl-muted); font-size: .82rem; }
-.vl-section { color: var(--vl-muted); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; margin: 14px 0 8px; }
-.vl-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.vl-stat { background: rgba(255,255,255,.03); border: 1px solid var(--vl-border); border-radius: 12px; padding: 10px 12px; }
-.vl-stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 1.55rem; font-weight: 700; color: var(--vl-text); line-height: 1.1; }
-.vl-stat-val small { font-size: .8rem; color: var(--vl-muted); margin-left: 2px; font-weight: 500; }
-.vl-stat-lbl { color: var(--vl-muted); font-size: .75rem; margin-top: 2px; }
-.vl-idle { color: var(--vl-muted); font-size: .9rem; }
-.vl-tips { margin: 0; padding-left: 18px; color: #CBD5E1; font-size: .9rem; }
-.vl-tips li { margin-bottom: 6px; }
-.vl-tips li::marker { color: var(--vl-teal); }
+.vl-footer { color: var(--vl-muted); font-size: 0.88rem; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--vl-line); }
+.vl-footer a { color: var(--vl-blue); }
 
-[data-testid="stMetric"] {
-  background: var(--vl-card); border: 1px solid var(--vl-border); border-radius: 14px; padding: 12px 16px;
+@media (prefers-reduced-motion: reduce) {
+  .vl-box::after, .vl-tag, .vl-rec.on { animation: none; }
 }
-iframe[title*="webrtc"] { border-radius: 14px; }
-
-/* ---------- how it works ---------- */
-.vl-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 6px 0 22px; }
-.vl-step { background: var(--vl-card); border: 1px solid var(--vl-border); border-radius: 16px; padding: 18px; }
-.vl-step-n {
-  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
-  color: #0E1117; background: var(--vl-gradient); margin-bottom: 10px;
-}
-.vl-step h4 { margin: 0 0 6px; padding: 0; font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
-.vl-step p { margin: 0; color: #CBD5E1; font-size: .9rem; }
-
-/* ---------- footer ---------- */
-.vl-footer { text-align: center; color: var(--vl-muted); font-size: .82rem; margin-top: 36px; padding: 18px 0 6px; border-top: 1px solid var(--vl-border); }
-.vl-footer a { color: var(--vl-teal); text-decoration: none; }
-.vl-section .vl-dot { display: inline-block; margin-right: 6px; vertical-align: middle; }

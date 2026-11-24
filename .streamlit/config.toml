@@ -1,6 +1,7 @@
 [theme]
-base = "dark"
-primaryColor = "#40C9A2"
-backgroundColor = "#0E1117"
-secondaryBackgroundColor = "#18202D"
-textColor = "#F1F5F9"
+base = "light"
+primaryColor = "#042AFF"  # the blue YOLO draws around people
+backgroundColor = "#EDEFF2"
+secondaryBackgroundColor = "#E2E5EA"
+textColor = "#1B1E25"
+font = "Archivo:https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap"

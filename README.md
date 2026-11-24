@@ -30,7 +30,7 @@ The project started as a set of Jupyter experiments with OpenCV video processing
 
 | | |
 |---|---|
-| 📹 **Live webcam inference** | Browser camera → WebRTC → model → annotated stream, side by side with a live dashboard of FPS, inference latency and the objects in frame |
+| 📹 **Live webcam inference** | Browser camera → WebRTC → model → annotated stream, side by side with a live readout of FPS, inference time and the objects in view, colour-keyed to their boxes |
 | 🎯 **Object detection** | YOLO11n, pretrained on COCO (80 classes: people, phones, laptops, cups, TVs…) |
 | 🕺 **Pose estimation** | YOLO26n-pose: 17 body keypoints and a skeleton for every person in the frame |
 | ✏️ **Pencil-sketch filter** | Classic OpenCV pipeline (grayscale → median blur → adaptive threshold), no neural network |
@@ -87,7 +87,7 @@ VisionLabAI/
 │   ├── filters.py          # OpenCV pencil-sketch filter
 │   ├── overlay.py          # FPS meter, label summaries, HUD drawing
 │   ├── live.py             # Thread-safe stats hand-off from video thread to UI
-│   ├── ui.py               # HTML components (hero, live panel, cards)
+│   ├── ui.py               # HTML components (title, live readout, steps)
 │   └── style.css           # Custom theme and layout
 ├── tests/                  # pytest unit tests (run in GitHub Actions)
 ├── .streamlit/config.toml  # Theme

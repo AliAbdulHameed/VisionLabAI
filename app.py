@@ -57,14 +57,14 @@ def sample_images() -> dict[str, bytes]:
 
 # ---------------------------------------------------------------- sidebar --
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header("Settings")
     task_key = st.radio(
-        "Vision task",
+        "What should the camera do?",
         options=list(TASKS),
-        format_func=lambda key: f"{TASKS[key].icon}  {TASKS[key].label}",
+        format_func=lambda key: TASKS[key].name,
+        captions=[t.description for t in TASKS.values()],
     )
     task = TASKS[task_key]
-    st.caption(task.description)
 
     if task.uses_model:
         confidence = st.slider(
@@ -86,10 +86,10 @@ with st.sidebar:
 
     show_hud = st.toggle("Stats overlay on video", value=True)
     st.divider()
-    st.caption("💡 Boxes lagging behind? Drop the inference resolution to 320.")
+    st.caption("Boxes lagging behind the video? Lower the inference resolution to 320.")
 
 detector = load_detector(task.model_dir, task.key) if task.uses_model else None
-device_label = "CPU" if detector is None else f"CPU · {detector.backend}"
+device_label = "CPU" if detector is None else f"CPU with {detector.backend}"
 
 
 def process(image_bgr: np.ndarray):
@@ -110,7 +110,7 @@ def process(image_bgr: np.ndarray):
 # stable and Streamlit doesn't reset the selected tab when the task changes.
 st.html(ui.hero_html(task, device_label))
 
-live_tab, image_tab, about_tab = st.tabs(["📹  Live webcam", "🖼️  Photo / upload", "ℹ️  How it works"])
+live_tab, image_tab, about_tab = st.tabs(["Live camera", "Photo", "How it works"])
 
 # --------------------------------------------------------------- live tab --
 with live_tab:
@@ -172,17 +172,16 @@ with live_tab:
                     "width": "100%",
                     "maxHeight": "520px",
                     "objectFit": "contain",
-                    "borderRadius": "14px",
-                    "background": "#05070B",
+                    "borderRadius": "6px",
+                    "background": "#22262E",
                 },
             },
-            translations={"start": "▶ Start camera", "stop": "■ Stop", "select_device": "Select camera"},
+            translations={"start": "Start camera", "stop": "Stop camera", "select_device": "Choose camera"},
             async_processing=True,
         )
         st.caption(
-            "🔒 Frames are processed in memory and never saved or recorded. "
-            "Video won't connect? Your network may block WebRTC. Try another "
-            "network or use the **Photo / upload** tab."
+            "Video won't connect? Some networks block WebRTC. Try another network, "
+            "or use the **Photo** tab."
         )
 
     playing = ctx.state.playing
@@ -199,14 +198,14 @@ with live_tab:
 # -------------------------------------------------------------- image tab --
 with image_tab:
     source = st.radio(
-        "Image source", ["📸 Webcam snapshot", "📁 Upload an image", "✨ Try a sample"],
+        "Image source", ["Take a snapshot", "Upload an image", "Use a sample image"],
         horizontal=True, label_visibility="collapsed",
     )
     image_bytes: bytes | None = None
-    if source.endswith("snapshot"):
+    if source == "Take a snapshot":
         shot = st.camera_input("Take a photo to analyze")
         image_bytes = shot.getvalue() if shot else None
-    elif source.endswith("image"):
+    elif source == "Upload an image":
         upload = st.file_uploader("Choose a JPG or PNG", type=["jpg", "jpeg", "png"])
         image_bytes = upload.getvalue() if upload else None
     else:
@@ -226,7 +225,7 @@ with image_tab:
             before.image(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), caption="Original", width="stretch")
             after.image(
                 cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB),
-                caption=f"{task.icon} {task.label}",
+                caption=task.label,
                 width="stretch",
             )
 
@@ -265,7 +264,7 @@ with image_tab:
             ok, encoded = cv2.imencode(".jpg", output_bgr)
             if ok:
                 st.download_button(
-                    "⬇️ Download result",
+                    "Download annotated image",
                     data=encoded.tobytes(),
                     file_name=f"visionlab_{task.key}.jpg",
                     mime="image/jpeg",
@@ -285,9 +284,9 @@ with about_tab:
 
 | Task | Model | Predicts |
 |---|---|---|
-| 🎯 Object detection | YOLO11n (COCO, 80 classes) | Boxes, classes, confidence |
-| 🕺 Pose estimation | YOLO26n-pose (COCO keypoints) | 17 body keypoints per person |
-| ✏️ Pencil sketch | OpenCV adaptive threshold | Line drawing, no neural network |
+| Object detection | YOLO11n (COCO, 80 classes) | Boxes, classes, confidence |
+| Pose estimation | YOLO26n-pose (COCO keypoints) | 17 body keypoints per person |
+| Pencil sketch | OpenCV adaptive threshold | Line drawing, no neural network |
 
 Both networks are pretrained "nano" variants, chosen for real-time speed on CPU.
 """

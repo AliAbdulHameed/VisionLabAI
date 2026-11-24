@@ -5,77 +5,69 @@ from __future__ import annotations
 from html import escape
 from pathlib import Path
 
+from visionlab.draw import PALETTE_BGR
+from visionlab.inference import COCO_NAMES
 from visionlab.live import LiveSnapshot
 from visionlab.tasks import Task
 
 CSS = "<style>" + (Path(__file__).with_name("style.css")).read_text(encoding="utf-8") + "</style>"
 
-STACK = ("YOLO11", "YOLO26-pose", "OpenVINO", "OpenCV", "WebRTC", "Streamlit")
-
 
 def hero_html(task: Task, device: str) -> str:
-    chips = "".join(f'<span class="vl-chip">{escape(name)}</span>' for name in STACK)
     return f"""
 <div class="vl-hero">
-  <div class="vl-status"><span class="vl-dot"></span>{escape(task.model)} · {escape(device)}</div>
-  <h1 class="vl-title">VisionLab AI</h1>
-  <p class="vl-tagline">Real-time <b>object detection</b>, <b>pose estimation</b> and an OpenCV
-  <b>sketch filter</b>, running on your own webcam, right in the browser.</p>
-  <div class="vl-chips">{chips}</div>
+  <div class="vl-box"><span class="vl-tag">project 0.99</span><h1 class="vl-title">VisionLab AI</h1></div>
+  <p class="vl-lede">Turn on your webcam and watch a neural network name what it sees, follow your pose,
+  or redraw the room as a pencil sketch, live in your browser.</p>
+  <p class="vl-meta">{escape(task.model)} running on {escape(device)}.
+  Frames are processed in memory and never stored.</p>
 </div>
 """
 
 
-def task_header_html(task: Task) -> str:
-    return f"""
-<div class="vl-card-head">
-  <div class="vl-icon">{task.icon}</div>
-  <div>
-    <div class="vl-card-title">{escape(task.name)}</div>
-    <div class="vl-card-sub">{escape(task.model)}</div>
-  </div>
-</div>
-"""
+def swatch(label: str) -> str:
+    """Hex colour of the box drawn for ``label``, so the legend matches the video."""
+    cls = COCO_NAMES.index(label) if label in COCO_NAMES else 0
+    b, g, r = PALETTE_BGR[cls % len(PALETTE_BGR)]
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def live_panel_html(task: Task, snap: LiveSnapshot, playing: bool) -> str:
-    """Live stats card: FPS, latency, object count and what's in frame."""
+    """Live readout: frame rate, inference time, and what's in view with box colours."""
     live = playing and snap.is_fresh()
 
-    def stat(value: str, unit: str, label: str) -> str:
-        unit_html = f"<small>{unit}</small>" if unit else ""
-        return f'<div class="vl-stat"><div class="vl-stat-val">{value}{unit_html}</div>' \
-               f'<div class="vl-stat-lbl">{label}</div></div>'
+    def fig(value: str, label: str) -> str:
+        return f'<div class="vl-fig"><b>{value}</b><span>{label}</span></div>'
 
+    noun = "people" if task.key == "pose" else "objects"
     if live:
-        objects = str(snap.total_objects) if task.uses_model else "–"
-        stats = stat(f"{snap.fps:.1f}", "", "Video FPS") + \
-            stat(f"{snap.latency_ms:.0f}", "ms", "Inference" if task.uses_model else "Filter time") + \
-            stat(objects, "", "People" if task.key == "pose" else "Objects")
+        figs = fig(f"{snap.fps:.1f}", "frames per second") + fig(
+            f"{snap.latency_ms:.0f}<small> ms</small>", "per inference" if task.uses_model else "per frame"
+        ) + fig(str(snap.total_objects) if task.uses_model else "–", f"{noun} in view")
     else:
-        stats = stat("–", "", "Video FPS") + stat("–", "", "Latency") + stat("–", "", "Objects")
+        figs = fig("–", "frames per second") + fig("–", "per inference") + fig("–", f"{noun} in view")
 
     if not playing:
-        body = '<div class="vl-idle">Press <b>▶ Start camera</b> and allow access to go live.</div>'
+        state, body = "Camera off", '<p class="vl-note">Select <b>Start camera</b> and allow access.</p>'
     elif not live:
-        body = '<div class="vl-idle">Connecting to the stream…</div>'
+        state, body = "Connecting…", '<p class="vl-note">Waiting for the first frames.</p>'
     elif not task.uses_model:
-        body = '<div class="vl-idle">Drawing every frame with adaptive thresholding.</div>'
+        state, body = "Live", '<p class="vl-note">Every frame is redrawn with adaptive thresholding.</p>'
     elif snap.counts:
-        body = '<div class="vl-chips">' + "".join(
-            f'<span class="vl-det">{escape(label)}<b>×{count}</b></span>' for label, count in snap.counts
-        ) + "</div>"
+        state = "Live"
+        body = '<ul class="vl-legend">' + "".join(
+            f'<li><i style="background:{swatch(label)}"></i>{escape(label)}<b>{count}</b></li>'
+            for label, count in snap.counts
+        ) + "</ul>"
     else:
-        body = '<div class="vl-idle">Nothing above the confidence threshold yet.</div>'
+        state, body = "Live", '<p class="vl-note">Nothing in view above the confidence threshold.</p>'
 
-    dot = "vl-dot" if live else "vl-dot off"
-    status = "Live" if live else "Idle"
     return f"""
-<div class="vl-card">
-  {task_header_html(task)}
-  <div class="vl-section"><span class="{dot}"></span>{status}</div>
-  <div class="vl-stats">{stats}</div>
-  <div class="vl-section">In frame now</div>
+<div class="vl-readout">
+  <h3>{escape(task.name)}</h3>
+  <p class="vl-model">{escape(task.model)}</p>
+  <div class="vl-state"><span class="vl-rec{' on' if live else ''}"></span>{state}</div>
+  <div class="vl-figs">{figs}</div>
   {body}
 </div>
 """
@@ -83,8 +75,7 @@ def live_panel_html(task: Task, snap: LiveSnapshot, playing: bool) -> str:
 
 def tips_html(task: Task) -> str:
     items = "".join(f"<li>{escape(tip)}</li>" for tip in task.tips)
-    return f'<div class="vl-card"><div class="vl-section" style="margin-top:0">Try this</div>' \
-           f'<ul class="vl-tips">{items}</ul></div>'
+    return f'<div class="vl-tips"><h4>Things to try</h4><ul>{items}</ul></div>'
 
 
 STEPS = (
@@ -105,7 +96,8 @@ def steps_html() -> str:
 
 FOOTER = """
 <div class="vl-footer">
-  VisionLab AI · Built with Streamlit, WebRTC, OpenCV and Ultralytics YOLO ·
-  <a href="https://github.com/AliAbdulHameed/VisionLabAI" target="_blank">Source on GitHub</a>
+  VisionLab AI is open source.
+  <a href="https://github.com/AliAbdulHameed/VisionLabAI" target="_blank">Read the code on GitHub</a>.
+  Models by Ultralytics, running on OpenVINO.
 </div>
 """
