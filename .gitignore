@@ -221,3 +221,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# VisionLab AI
+*.pt
+*.onnx
+*.mp4
+*.avi
+*.webm
+runs/
