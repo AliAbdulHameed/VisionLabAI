@@ -58,3 +58,13 @@ def test_thread_exits_when_idle_and_restarts_on_demand():
     assert wait_for(lambda: worker._thread is None)
     worker.submit(frame(2), lambda f: "b", "t")
     assert wait_for(lambda: worker.latest("t") == "b")
+
+
+def test_rate_cap_limits_jobs_per_second():
+    worker = BackgroundInference(min_interval_s=0.1)
+    deadline = time.monotonic() + 0.55
+    while time.monotonic() < deadline:  # a 200 fps camera
+        worker.submit(frame(1), lambda f: "ok", "t")
+        time.sleep(0.005)
+    assert wait_for(lambda: worker.latest("t") == "ok")
+    assert 4 <= worker.completed <= 7  # ~10/s, not ~100

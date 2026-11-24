@@ -37,7 +37,7 @@ The project started as a set of Jupyter experiments with OpenCV video processing
 | 🖼️ **Photo mode** | Analyze a webcam snapshot, an uploaded image or a built-in sample. See a per-class detection table with confidence and download the annotated result |
 | 🎛️ **Live controls** | Switch tasks and tune the confidence threshold and inference resolution *while the stream is running*, with per-task tips for what to try |
 | 🎞️ **Smooth video on a CPU** | The model runs off the video thread on the newest frame, so the stream plays at camera speed while detections refresh as fast as the model allows |
-| ⚡ **Lean, fast inference** | The models run on OpenVINO with a small NumPy pipeline: no PyTorch at runtime, 3× less memory and 3–4× faster CPU inference, with threads sized to the container's CPU quota |
+| ⚡ **Lean, fast inference** | The models run on OpenVINO with a small NumPy pipeline: no PyTorch at runtime, 3× less memory and 3–4× faster CPU inference, at a capped 15 detections/s to stay within free-tier CPU limits |
 | 🔒 **Privacy-minded** | Frames are processed in memory and never written to disk or recorded |
 
 <table>
@@ -67,7 +67,7 @@ flowchart LR
 - **Streaming:** [`streamlit-webrtc`](https://github.com/whitphx/streamlit-webrtc) handles the peer connection. Each incoming `av.VideoFrame` goes to a callback on a worker thread, and the callback returns the processed frame.
 - **Non-blocking video:** the frame callback never waits for the model. It hands a copy of the newest frame to a background worker and immediately redraws the latest finished detections onto the current frame. Frames that arrive while the model is busy replace the pending one, so there's no backlog and boxes are at most one inference behind.
 - **No PyTorch at runtime:** the Ultralytics models are exported once to OpenVINO IR (FP16 weights, dynamic input shapes) and committed to `models/`. The app runs them with its own pre/post-processing (letterbox, confidence filter, class-aware NMS, coordinate rescaling, drawing) that mirrors Ultralytics' predictor. Across 128 combinations of image, resolution and confidence threshold it finds the same objects as Ultralytics, with identical coordinates when given the same input. Dropping PyTorch cut the install from several GB to under 1 GB and memory to about a third.
-- **CPU-quota aware:** cloud containers often see every host core but may only use a fraction of them. The app reads the cgroup CPU quota and caps inference threads to fit, leaving a core for video encoding. Otherwise the runtime spawns a thread per visible core, exhausts the quota in a burst and gets frozen, which shows up as stutter.
+- **CPU budget:** free hosting throttles apps that use too much CPU. The model runs on one thread (extra threads cut ~4 ms of latency but nearly double CPU per detection, and the worker already hides latency from the video) and at most 15 times a second. Video still plays at full camera rate; boxes refresh every ~67 ms. Together this roughly halves the server's CPU use per viewer.
 - **Shared, thread-safe models:** each model loads once with `st.cache_resource`, warms up on a dummy frame, and is shared by all visitors behind a lock.
 - **Live settings:** Streamlit reruns the script when a slider changes, and `streamlit-webrtc` swaps in the new frame callback. The running stream picks up the new settings without reconnecting.
 - **Live dashboard:** the frame callback publishes FPS, latency and per-class counts to a lock-protected `LiveStats` object. A Streamlit fragment re-renders only the stats panel twice a second, so the rest of the page and the video stream are untouched.
@@ -82,7 +82,6 @@ VisionLabAI/
 │   ├── tasks.py            # Task registry (labels, descriptions, model folders)
 │   ├── inference.py        # OpenVINO YOLO engine: letterbox, NMS, rescaling
 │   ├── draw.py             # Boxes, labels and pose skeletons
-│   ├── cpu.py              # cgroup CPU-quota detection, thread sizing
 │   ├── background.py       # Non-blocking, latest-frame-wins inference worker
 │   ├── filters.py          # OpenCV pencil-sketch filter
 │   ├── overlay.py          # FPS meter, label summaries, HUD drawing
