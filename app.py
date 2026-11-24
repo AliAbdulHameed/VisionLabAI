@@ -108,7 +108,7 @@ def process(image_bgr: np.ndarray):
 # ----------------------------------------------------------------- header --
 # The hero is a single element whatever the task, so the page structure stays
 # stable and Streamlit doesn't reset the selected tab when the task changes.
-st.html(ui.hero_html(task, device_label))
+st.html(ui.hero_html(task, device_label), unsafe_allow_javascript=True)
 
 live_tab, image_tab, about_tab = st.tabs(["Live camera", "Photo", "How it works"])
 

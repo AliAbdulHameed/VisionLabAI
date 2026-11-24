@@ -13,6 +13,32 @@ from visionlab.tasks import Task
 CSS = "<style>" + (Path(__file__).with_name("style.css")).read_text(encoding="utf-8") + "</style>"
 
 
+# Flips Streamlit's own Light/Dark setting (the one in the top-right menu), so the
+# choice is per visitor, remembered by the browser, and doesn't restart the camera.
+THEME_SCRIPT = """
+(() => {
+  const want = () => getComputedStyle(document.querySelector('[data-testid="stApp"]')).colorScheme === "dark"
+    ? "Light" : "Dark";
+  async function toggle() {
+    const menu = document.querySelector('[data-testid="stMainMenu"] button');
+    if (!menu) return;
+    const label = want();
+    menu.click();
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 25));
+      const option = document.querySelector(`[data-testid="stMainMenuItem-theme-${label}"]`);
+      if (option) { option.click(); break; }
+    }
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  }
+  document.querySelectorAll(".vl-theme:not([data-bound])").forEach((button) => {
+    button.dataset.bound = "1";
+    button.addEventListener("click", toggle);
+  });
+})();
+"""
+
+
 def hero_html(task: Task, device: str) -> str:
     return f"""
 <div class="vl-hero">
@@ -21,7 +47,9 @@ def hero_html(task: Task, device: str) -> str:
   or redraw the room as a pencil sketch, live in your browser.</p>
   <p class="vl-meta">{escape(task.model)} running on {escape(device)}.
   Frames are processed in memory and never stored.</p>
+  <button class="vl-theme" type="button" aria-label="Switch between light and dark mode">Light / Dark</button>
 </div>
+<script>{THEME_SCRIPT}</script>
 """
 
 
