@@ -17,7 +17,7 @@ class Task:
     icon: str
     description: str
     tips: tuple[str, ...] = ()
-    weights: str | None = None  # None means the task is pure OpenCV, no model
+    model_dir: str | None = None  # OpenVINO model folder; None means pure OpenCV, no model
 
     @property
     def label(self) -> str:
@@ -25,7 +25,7 @@ class Task:
 
     @property
     def uses_model(self) -> bool:
-        return self.weights is not None
+        return self.model_dir is not None
 
 
 TASKS: dict[str, Task] = {
@@ -42,7 +42,7 @@ TASKS: dict[str, Task] = {
                 "Lower the confidence slider to see less certain guesses",
                 "Raise the resolution to catch small objects in the background",
             ),
-            weights="yolo11n.pt",
+            model_dir="models/yolo11n",
         ),
         Task(
             key="pose",
@@ -55,7 +55,7 @@ TASKS: dict[str, Task] = {
                 "Wave or raise a hand and watch the skeleton follow",
                 "Grab a friend: every person gets their own skeleton",
             ),
-            weights="yolo26n-pose.pt",
+            model_dir="models/yolo26n-pose",
         ),
         Task(
             key="sketch",

@@ -1,8 +1,7 @@
 streamlit>=1.50,<2
 streamlit-webrtc>=0.79.1,<1
-# Pulls in PyTorch, OpenCV (opencv-python) and Pillow.
-ultralytics>=8.4,<9
-# 3-4x faster CPU inference than PyTorch for the YOLO nano models.
+# Runs the bundled YOLO models; no PyTorch needed at runtime (see scripts/export_models.py).
 openvino>=2025.0
+opencv-python-headless>=4.8
 av>=14
 numpy>=1.26

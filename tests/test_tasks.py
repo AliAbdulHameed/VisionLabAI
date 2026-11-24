@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from visionlab.tasks import TASKS
 
 
@@ -5,9 +7,10 @@ def test_task_keys_match():
     assert all(key == task.key for key, task in TASKS.items())
 
 
-def test_model_tasks_have_weights():
-    assert TASKS["detect"].weights == "yolo11n.pt"
-    assert TASKS["pose"].weights == "yolo26n-pose.pt"
+def test_model_tasks_point_at_bundled_models():
+    for key in ("detect", "pose"):
+        model_dir = Path(TASKS[key].model_dir)
+        assert list(model_dir.glob("*.xml")) and list(model_dir.glob("*.bin"))
     assert not TASKS["sketch"].uses_model
 
 

@@ -120,7 +120,7 @@ def postprocess(
     output: np.ndarray,
     num_classes: int,
     conf: float,
-    iou: float = 0.7,
+    iou: float = 0.5,
     max_det: int = 300,
     max_wh: int = 7680,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -185,7 +185,7 @@ class Detector:
         """Run one dummy frame so the first real frame isn't slow."""
         self.predict(np.zeros((imgsz, imgsz, 3), dtype=np.uint8), conf=0.5, imgsz=imgsz)
 
-    def detect(self, image_bgr: np.ndarray, conf: float, imgsz: int, iou: float = 0.7) -> Detections:
+    def detect(self, image_bgr: np.ndarray, conf: float, imgsz: int, iou: float = 0.5) -> Detections:
         padded, info = letterbox(image_bgr, imgsz)
         with self._lock:
             output = self._request.infer({0: to_tensor(padded)})[0]
