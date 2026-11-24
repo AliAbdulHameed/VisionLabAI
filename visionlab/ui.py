@@ -49,11 +49,11 @@ def live_panel_html(task: Task, snap: LiveSnapshot, playing: bool) -> str:
 
     if live:
         objects = str(snap.total_objects) if task.uses_model else "–"
-        stats = stat(f"{snap.fps:.1f}", "", "Frames / sec") + \
+        stats = stat(f"{snap.fps:.1f}", "", "Video FPS") + \
             stat(f"{snap.latency_ms:.0f}", "ms", "Inference" if task.uses_model else "Filter time") + \
             stat(objects, "", "People" if task.key == "pose" else "Objects")
     else:
-        stats = stat("–", "", "Frames / sec") + stat("–", "", "Latency") + stat("–", "", "Objects")
+        stats = stat("–", "", "Video FPS") + stat("–", "", "Latency") + stat("–", "", "Objects")
 
     if not playing:
         body = '<div class="vl-idle">Press <b>▶ Start camera</b> and allow access to go live.</div>'
@@ -90,8 +90,8 @@ def tips_html(task: Task) -> str:
 STEPS = (
     ("Capture", "Your browser grabs the camera with getUserMedia and streams it to the server over WebRTC."),
     ("Decode", "Each frame arrives in a Python callback and is decoded with PyAV into a NumPy array."),
-    ("Infer", "One cached YOLO model, shared across visitors behind a lock, predicts boxes or keypoints."),
-    ("Render", "Boxes, skeletons and a stats overlay are drawn, then the frame streams straight back."),
+    ("Infer", "A background worker runs YOLO via OpenVINO on the newest frame, so video never waits."),
+    ("Render", "The latest boxes or skeletons are drawn onto every frame, which streams straight back."),
 )
 
 

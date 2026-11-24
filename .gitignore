@@ -229,3 +229,4 @@ __marimo__/
 *.avi
 *.webm
 runs/
+*_openvino_model/

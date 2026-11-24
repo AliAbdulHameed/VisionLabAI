@@ -35,7 +35,8 @@ The project started as a set of Jupyter experiments with OpenCV video processing
 | ✏️ **Pencil-sketch filter** | Classic OpenCV pipeline (grayscale → median blur → adaptive threshold), no neural network |
 | 🖼️ **Photo mode** | Analyze a webcam snapshot, an uploaded image or a built-in sample. See a per-class detection table with confidence and download the annotated result |
 | 🎛️ **Live controls** | Switch tasks and tune the confidence threshold and inference resolution *while the stream is running*, with per-task tips for what to try |
-| ⚡ **CPU or GPU** | Automatically uses a CUDA GPU when available and falls back to CPU otherwise |
+| 🎞️ **Smooth video on a CPU** | The model runs off the video thread on the newest frame, so the stream plays at camera speed while detections refresh as fast as the model allows |
+| ⚡ **Optimized inference** | OpenVINO runs the models 3–4× faster than PyTorch on CPU, with threads sized to the container's CPU quota; a CUDA GPU is used automatically when present |
 | 🔒 **Privacy-minded** | Frames are processed in memory and never written to disk or recorded |
 
 <table>
@@ -63,6 +64,9 @@ flowchart LR
 ```
 
 - **Streaming:** [`streamlit-webrtc`](https://github.com/whitphx/streamlit-webrtc) handles the peer connection. Each incoming `av.VideoFrame` goes to a callback on a worker thread, and the callback returns the processed frame.
+- **Non-blocking video:** the frame callback never waits for the model. It hands a copy of the newest frame to a background worker and immediately redraws the latest finished detections onto the current frame. Frames that arrive while the model is busy replace the pending one, so there's no backlog and boxes are at most one inference behind.
+- **OpenVINO on CPU:** on first load each model is exported to OpenVINO IR with dynamic input shapes (about 2 s) and reused afterwards. If OpenVINO is unavailable or the export fails, the app falls back to PyTorch.
+- **CPU-quota aware:** cloud containers often see every host core but may only use a fraction of them. The app reads the cgroup CPU quota and caps inference threads to fit, leaving a core for video encoding. Otherwise the runtime spawns a thread per visible core, exhausts the quota in a burst and gets frozen, which shows up as stutter.
 - **Shared, thread-safe models:** each model loads once with `st.cache_resource`, warms up on a dummy frame, and is shared by all visitors. A lock serializes calls into the model, because Ultralytics predictors aren't safe to call from several threads at once.
 - **Live settings:** Streamlit reruns the script when a slider changes, and `streamlit-webrtc` swaps in the new frame callback. The running stream picks up the new settings without reconnecting.
 - **Live dashboard:** the frame callback publishes FPS, latency and per-class counts to a lock-protected `LiveStats` object. A Streamlit fragment re-renders only the stats panel twice a second, so the rest of the page and the video stream are untouched.
@@ -75,7 +79,8 @@ VisionLabAI/
 ├── app.py                  # Streamlit app: sidebar, live/photo/about tabs
 ├── visionlab/
 │   ├── tasks.py            # Task registry (labels, descriptions, weights)
-│   ├── inference.py        # Thread-safe YOLO wrapper, latency + labels
+│   ├── inference.py        # YOLO wrapper: OpenVINO export, CPU-quota-aware threads
+│   ├── background.py       # Non-blocking, latest-frame-wins inference worker
 │   ├── filters.py          # OpenCV pencil-sketch filter
 │   ├── overlay.py          # FPS meter, label summaries, HUD drawing
 │   ├── live.py             # Thread-safe stats hand-off from video thread to UI
@@ -141,7 +146,14 @@ CLOUDFLARE_TURN_KEY_API_TOKEN = "..."
 
 `streamlit-webrtc` detects these environment variables and configures the ICE servers automatically. Never commit keys to the repository. See the [streamlit-webrtc deployment guide](https://github.com/whitphx/streamlit-webrtc#network-configuration) for details.
 
-**Performance:** Free hosting is CPU-only and shared. Expect a few FPS for detection at 416 px. Lower the inference resolution to 320 for smoother video, or deploy on a GPU host for true real-time speed.
+**Performance:** Free hosting is CPU-only and shared. Measured locally inside a container limited to a 1-CPU quota (YOLO11n at 416 px, 20 fps test camera):
+
+| | Blocking + PyTorch | Non-blocking + OpenVINO |
+|---|---|---|
+| Inference latency | 87–426 ms | 18–22 ms |
+| Frames shown in the browser | 10–12 fps | 14–16 fps |
+
+With more CPU or a 30 fps webcam the video rate rises further. The remaining ceiling on a single CPU is WebRTC video encoding and decoding, not the model.
 
 ## Roadmap
 

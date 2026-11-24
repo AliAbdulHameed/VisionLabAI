@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
+from functools import partial
 
 import av
 import cv2
@@ -15,6 +16,7 @@ import streamlit as st
 from streamlit_webrtc import WebRtcMode, webrtc_streamer
 
 from visionlab import ui
+from visionlab.background import BackgroundInference
 from visionlab.filters import pencil_sketch
 from visionlab.live import LiveStats
 from visionlab.overlay import FPSMeter, draw_hud, summarize_counts
@@ -81,10 +83,13 @@ with st.sidebar:
 
     show_hud = st.toggle("Stats overlay on video", value=True)
     st.divider()
-    st.caption("💡 Video choppy? Drop the inference resolution to 320.")
+    st.caption("💡 Boxes lagging behind? Drop the inference resolution to 320.")
 
 detector = load_detector(task.weights) if task.uses_model else None
-device_label = "CPU" if detector is None or detector.device == "cpu" else "GPU"
+if detector is None:
+    device_label = "CPU"
+else:
+    device_label = f"{'CPU' if detector.device == 'cpu' else 'GPU'} · {detector.backend}"
 
 
 def process(image_bgr: np.ndarray):
@@ -112,23 +117,38 @@ with live_tab:
     if "fps_meter" not in st.session_state:
         st.session_state.fps_meter = FPSMeter()
         st.session_state.live_stats = LiveStats()
+        st.session_state.inference_worker = BackgroundInference()
     fps_meter: FPSMeter = st.session_state.fps_meter
     live_stats: LiveStats = st.session_state.live_stats
+    worker: BackgroundInference = st.session_state.inference_worker
 
     # Runs on a worker thread for every frame, so it must not call st.* APIs.
     # streamlit-webrtc swaps in the new closure on every rerun, which is how
     # sidebar changes reach a running stream.
     def video_frame_callback(frame: av.VideoFrame) -> av.VideoFrame:
         image_bgr = frame.to_ndarray(format="bgr24")
-        output_bgr, prediction, latency_ms = process(image_bgr)
+        labels: list[str] | None = None
+        if detector is None:
+            output_bgr, _, latency_ms = process(image_bgr)  # the sketch filter takes ~2 ms
+        else:
+            # The model runs in the background on the newest frame (a copy, since
+            # we draw on this one). Every frame is shown straight away with the
+            # latest finished detections, so the video never waits for the model.
+            job = partial(detector.predict, conf=confidence, imgsz=image_size)
+            worker.submit(image_bgr.copy(), job, task.key)
+            prediction = worker.latest(task.key)
+            if prediction is None:
+                output_bgr, latency_ms, labels = image_bgr, 0.0, []
+            else:
+                output_bgr = prediction.draw(image_bgr)
+                latency_ms, labels = prediction.latency_ms, prediction.labels
         fps = fps_meter.tick()
-        labels = prediction.labels if prediction is not None else None
         live_stats.update(fps, latency_ms, labels)
         if show_hud:
-            hud = [f"{fps:4.1f} FPS  |  {latency_ms:3.0f} ms"]
+            hud = [f"{fps:4.1f} FPS  |  {latency_ms:3.0f} ms model" if detector else f"{fps:4.1f} FPS"]
             if labels is not None:
                 hud.append(summarize_counts(labels))
-            draw_hud(output_bgr, hud)
+            draw_hud(output_bgr, hud, anchor="bottom-left")
         return av.VideoFrame.from_ndarray(output_bgr, format="bgr24")
 
     video_col, panel_col = st.columns([3, 2], gap="large")
