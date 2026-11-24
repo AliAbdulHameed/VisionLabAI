@@ -10,7 +10,7 @@ from visionlab.tasks import Task
 
 CSS = "<style>" + (Path(__file__).with_name("style.css")).read_text(encoding="utf-8") + "</style>"
 
-STACK = ("YOLO11", "YOLO26-pose", "PyTorch", "OpenCV", "WebRTC", "Streamlit")
+STACK = ("YOLO11", "YOLO26-pose", "OpenVINO", "OpenCV", "WebRTC", "Streamlit")
 
 
 def hero_html(task: Task, device: str) -> str:

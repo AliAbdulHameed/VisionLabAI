@@ -1,4 +1,4 @@
-from visionlab.inference import cgroup_cpu_quota, inference_threads
+from visionlab.cpu import cgroup_cpu_quota, inference_threads
 
 
 def write(path, text):

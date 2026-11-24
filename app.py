@@ -8,6 +8,7 @@ from __future__ import annotations
 import time
 from collections import defaultdict
 from functools import partial
+from pathlib import Path
 
 import av
 import cv2
@@ -31,24 +32,26 @@ st.set_page_config(
 st.html(ui.CSS)
 
 
-@st.cache_resource(show_spinner="Loading model (the first launch downloads the weights)…")
-def load_detector(weights: str):
-    # Imported lazily so the sketch filter works without loading PyTorch.
+ROOT = Path(__file__).parent
+
+
+@st.cache_resource(show_spinner="Loading model…")
+def load_detector(model_dir: str, task_key: str):
+    # Imported lazily so the sketch filter never loads OpenVINO.
     from visionlab.inference import Detector
 
-    detector = Detector(weights)
+    detector = Detector(ROOT / model_dir, task_key)
     detector.warmup()
     return detector
 
 
 @st.cache_data
 def sample_images() -> dict[str, bytes]:
-    """Demo photos bundled with Ultralytics, for visitors without a camera."""
-    from ultralytics.utils import ASSETS
-
+    """Demo photos (from the Ultralytics project) for visitors without a camera."""
+    samples = ROOT / "assets" / "samples"
     return {
-        "Street scene (bus.jpg)": (ASSETS / "bus.jpg").read_bytes(),
-        "Two people (zidane.jpg)": (ASSETS / "zidane.jpg").read_bytes(),
+        "Street scene (bus.jpg)": (samples / "bus.jpg").read_bytes(),
+        "Two people (zidane.jpg)": (samples / "zidane.jpg").read_bytes(),
     }
 
 
@@ -85,11 +88,8 @@ with st.sidebar:
     st.divider()
     st.caption("💡 Boxes lagging behind? Drop the inference resolution to 320.")
 
-detector = load_detector(task.weights) if task.uses_model else None
-if detector is None:
-    device_label = "CPU"
-else:
-    device_label = f"{'CPU' if detector.device == 'cpu' else 'GPU'} · {detector.backend}"
+detector = load_detector(task.model_dir, task.key) if task.uses_model else None
+device_label = "CPU" if detector is None else f"CPU · {detector.backend}"
 
 
 def process(image_bgr: np.ndarray):
