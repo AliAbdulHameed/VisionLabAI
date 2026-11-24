@@ -13,11 +13,12 @@ import numpy as np
 class FPSMeter:
     """Frames-per-second estimate, smoothed with an exponential moving average."""
 
-    def __init__(self, smoothing: float = 0.9, clock=time.perf_counter):
+    def __init__(self, smoothing: float = 0.9, clock=time.perf_counter, reset_after_s: float = 2.0):
         if not 0.0 <= smoothing < 1.0:
             raise ValueError("smoothing must be in [0, 1)")
         self._smoothing = smoothing
         self._clock = clock
+        self._reset_after_s = reset_after_s
         self._last: float | None = None
         self.fps: float = 0.0
 
@@ -26,7 +27,10 @@ class FPSMeter:
         now = self._clock()
         if self._last is not None:
             elapsed = now - self._last
-            if elapsed > 0:
+            if elapsed > self._reset_after_s:
+                # The stream was paused or restarted: start averaging afresh.
+                self.fps = 0.0
+            elif elapsed > 0:
                 instant = 1.0 / elapsed
                 self.fps = instant if self.fps == 0 else (
                     self._smoothing * self.fps + (1 - self._smoothing) * instant
