@@ -1,11 +1,12 @@
-/* Text and panels inherit Streamlit's theme colours so they stay readable if a
-   visitor switches to dark mode; only the accent and the video monitor are fixed. */
+/* Streamlit sets color-scheme on .stApp to the active theme, so light-dark()
+   follows the visitor's Light/Dark choice. Text otherwise inherits the theme. */
 :root {
-  --vl-blue: #042AFF;
+  --vl-blue: light-dark(#042AFF, #6B84FF);
+  --vl-on-blue: light-dark(#FFFFFF, #0F1115);
   --vl-rec: #E0283C;
   --vl-monitor: #22262E;
-  --vl-line: rgba(120, 128, 145, 0.28);
-  --vl-muted: rgba(90, 96, 112, 1);
+  --vl-line: light-dark(rgba(120, 128, 145, 0.28), rgba(160, 168, 185, 0.22));
+  --vl-muted: light-dark(#5A6070, #A3A9B6);
 }
 
 [data-testid="stMainBlockContainer"], .block-container { max-width: 1240px; padding-top: 2.5rem; }
@@ -20,7 +21,7 @@
 }
 .vl-tag {
   position: absolute; left: 0; bottom: 100%; padding: 0.15rem 0.5rem;
-  background: var(--vl-blue); color: #fff; font-size: 0.95rem; font-weight: 600;
+  background: var(--vl-blue); color: var(--vl-on-blue); font-size: 0.95rem; font-weight: 600;
   font-variant-numeric: tabular-nums; animation: vl-fade 300ms 450ms both;
 }
 .vl-title {
@@ -31,6 +32,12 @@
 @keyframes vl-fade { from { opacity: 0; } }
 .vl-lede { font-size: 1.2rem; line-height: 1.5; max-width: 58ch; margin: 1.1rem 0 0.35rem; }
 .vl-meta { color: var(--vl-muted); font-size: 0.92rem; margin: 0; }
+.vl-theme {
+  margin-top: 0.9rem; padding: 0.35rem 0.8rem; font: inherit; font-size: 0.88rem; color: inherit;
+  background: transparent; border: 1px solid var(--vl-line); border-radius: 4px; cursor: pointer;
+}
+.vl-theme:hover { border-color: var(--vl-blue); }
+.vl-theme:focus-visible { outline: 2px solid var(--vl-blue); outline-offset: 2px; }
 
 /* ---------- live readout ---------- */
 .vl-readout { border: 1px solid var(--vl-line); border-radius: 6px; padding: 1.1rem 1.25rem 1.2rem; margin-bottom: 1rem; }
