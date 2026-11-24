@@ -14,7 +14,7 @@ def test_model_tasks_point_at_bundled_models():
     assert not TASKS["sketch"].uses_model
 
 
-def test_every_task_has_icon_and_tips():
+def test_every_task_has_tips():
     for task in TASKS.values():
-        assert task.icon and task.tips
+        assert task.tips
         assert task.label == f"{task.name} · {task.model}"

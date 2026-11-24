@@ -14,7 +14,6 @@ class Task:
     key: str
     name: str
     model: str
-    icon: str
     description: str
     tips: tuple[str, ...] = ()
     model_dir: str | None = None  # OpenVINO model folder; None means pure OpenCV, no model
@@ -35,7 +34,6 @@ TASKS: dict[str, Task] = {
             key="detect",
             name="Object detection",
             model="YOLO11n",
-            icon="🎯",
             description="Finds and labels the 80 COCO object classes (people, phones, cups, TVs, ...).",
             tips=(
                 "Hold up your phone, a cup, a bottle or a book",
@@ -48,7 +46,6 @@ TASKS: dict[str, Task] = {
             key="pose",
             name="Pose estimation",
             model="YOLO26n-pose",
-            icon="🕺",
             description="Tracks 17 body keypoints per person and draws a skeleton.",
             tips=(
                 "Lean back so your shoulders and arms are in frame",
@@ -61,7 +58,6 @@ TASKS: dict[str, Task] = {
             key="sketch",
             name="Pencil sketch",
             model="OpenCV",
-            icon="✏️",
             description=(
                 "Classic computer vision: adaptive thresholding turns each frame "
                 "into a line drawing. No neural network."

@@ -99,5 +99,5 @@ def draw_hud(
     for i, line in enumerate(lines):
         baseline_y = y0 + pad + line_height * i + sizes[i][1]
         cv2.putText(image_bgr, line, (x0 + pad, baseline_y), font, scale,
-                    (162, 201, 64), thickness, cv2.LINE_AA)
+                    (245, 245, 245), thickness, cv2.LINE_AA)
     return image_bgr
