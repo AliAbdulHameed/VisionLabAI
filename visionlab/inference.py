@@ -20,7 +20,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from visionlab.cpu import inference_threads
 from visionlab.draw import draw_detections
 
 COCO_NAMES = (
@@ -158,20 +157,21 @@ class Detector:
     """A YOLO model running on OpenVINO's CPU plugin.
 
     One instance is cached per model and shared by every browser session, so a
-    lock serialises inference. Threads are sized to the container's real CPU
-    budget (see ``visionlab.cpu``).
+    lock serialises inference. One thread by default: extra threads cut latency
+    by ~4 ms but nearly double CPU per detection, and the background worker
+    already hides that latency from the video.
     """
 
     device = "cpu"
     backend = "OpenVINO"
 
-    def __init__(self, model_dir: str | Path, task: str, threads: int | None = None):
+    def __init__(self, model_dir: str | Path, task: str, threads: int = 1):
         import openvino as ov
 
         xml = next(Path(model_dir).glob("*.xml"))
         self.task = task
         self.num_classes = 1 if task == "pose" else len(COCO_NAMES)
-        self.threads = threads or inference_threads()
+        self.threads = threads
         core = ov.Core()
         self._compiled = core.compile_model(
             core.read_model(str(xml)),

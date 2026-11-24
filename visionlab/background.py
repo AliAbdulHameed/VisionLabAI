@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from collections.abc import Callable, Hashable
 from typing import Any
 
@@ -24,8 +25,11 @@ Job = Callable[[np.ndarray], Any]
 
 
 class BackgroundInference:
-    def __init__(self, idle_timeout_s: float = 5.0):
+    def __init__(self, idle_timeout_s: float = 5.0, min_interval_s: float = 0.0):
         self._idle_timeout_s = idle_timeout_s
+        # Rate cap: the video plays at camera speed regardless, so running the model
+        # more often than the eye can follow box updates only burns CPU.
+        self._min_interval_s = min_interval_s
         self._cond = threading.Condition()
         self._pending: tuple[np.ndarray, Job, Hashable] | None = None
         self._latest: tuple[Hashable, Any] | None = None
@@ -62,6 +66,7 @@ class BackgroundInference:
                     return
                 frame, job, tag = self._pending
                 self._pending = None
+            started = time.monotonic()
             try:
                 result = job(frame)
             except Exception:
@@ -70,3 +75,5 @@ class BackgroundInference:
             with self._cond:
                 self._latest = (tag, result)
                 self.completed += 1
+            # Newer frames keep replacing the pending one while we wait.
+            time.sleep(max(0.0, self._min_interval_s - (time.monotonic() - started)))

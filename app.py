@@ -117,7 +117,7 @@ with live_tab:
     if "fps_meter" not in st.session_state:
         st.session_state.fps_meter = FPSMeter()
         st.session_state.live_stats = LiveStats()
-        st.session_state.inference_worker = BackgroundInference()
+        st.session_state.inference_worker = BackgroundInference(min_interval_s=1 / 15)  # ≤15 detections/s
     fps_meter: FPSMeter = st.session_state.fps_meter
     live_stats: LiveStats = st.session_state.live_stats
     worker: BackgroundInference = st.session_state.inference_worker
