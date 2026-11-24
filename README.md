@@ -4,9 +4,9 @@
 
 **Real-time object detection and human pose estimation, running on your own webcam, in the browser.**
 
-<!-- After deploying, add your live demo badge here, e.g.:
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://YOUR-APP.streamlit.app)
--->
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://visionlab-ai.streamlit.app)
+
+**[▶ Try the live demo](https://visionlab-ai.streamlit.app)**: no install, just allow camera access.
 
 [![CI](https://github.com/AliAbdulHameed/VisionLabAI/actions/workflows/ci.yml/badge.svg)](https://github.com/AliAbdulHameed/VisionLabAI/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
@@ -21,7 +21,7 @@
 
 ## Overview
 
-VisionLab AI is a Streamlit web app that streams a visitor's webcam to a Python backend over **WebRTC**, runs a computer vision model on every frame, and streams the annotated video back in real time. No install is needed on the visitor's side: open the page, click **Start**, and allow camera access.
+VisionLab AI is a Streamlit web app that streams a visitor's webcam to a Python backend over **WebRTC**, runs a computer vision model on every frame, and streams the annotated video back in real time. No install is needed on the visitor's side: [open the live demo](https://visionlab-ai.streamlit.app), click **Start camera**, and allow camera access.
 
 The project started as a set of Jupyter experiments with OpenCV video processing, MoveNet and YOLO pose estimation, and local webcam detection. I turned the techniques that worked best into an interactive, deployable app that anyone can use.
 
