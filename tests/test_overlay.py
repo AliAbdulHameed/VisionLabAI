@@ -53,3 +53,14 @@ def test_draw_hud_darkens_panel_and_keeps_shape():
 def test_draw_hud_handles_tiny_frames():
     tiny = np.zeros((5, 5, 3), dtype=np.uint8)
     draw_hud(tiny, ["a long line of text that does not fit"])
+
+
+def test_fps_meter_resets_after_a_pause():
+    clock = FakeClock(step=0.05)
+    meter = FPSMeter(clock=clock)
+    for _ in range(20):
+        meter.tick()
+    clock.step = 10.0  # stream paused
+    assert meter.tick() == 0.0
+    clock.step = 0.1  # resumed at 10 FPS
+    assert meter.tick() == pytest.approx(10.0)

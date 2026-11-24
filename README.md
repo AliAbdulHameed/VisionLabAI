@@ -29,12 +29,12 @@ The project started as a set of Jupyter experiments with OpenCV video processing
 
 | | |
 |---|---|
-| 📹 **Live webcam inference** | Browser camera → WebRTC → model → annotated stream, with a live overlay showing FPS, inference latency and object counts |
+| 📹 **Live webcam inference** | Browser camera → WebRTC → model → annotated stream, side by side with a live dashboard of FPS, inference latency and the objects in frame |
 | 🎯 **Object detection** | YOLO11n, pretrained on COCO (80 classes: people, phones, laptops, cups, TVs…) |
 | 🕺 **Pose estimation** | YOLO26n-pose: 17 body keypoints and a skeleton for every person in the frame |
 | ✏️ **Pencil-sketch filter** | Classic OpenCV pipeline (grayscale → median blur → adaptive threshold), no neural network |
 | 🖼️ **Photo mode** | Analyze a webcam snapshot, an uploaded image or a built-in sample. See a per-class detection table with confidence and download the annotated result |
-| 🎛️ **Live controls** | Switch tasks and tune the confidence threshold and inference resolution *while the stream is running* |
+| 🎛️ **Live controls** | Switch tasks and tune the confidence threshold and inference resolution *while the stream is running*, with per-task tips for what to try |
 | ⚡ **CPU or GPU** | Automatically uses a CUDA GPU when available and falls back to CPU otherwise |
 | 🔒 **Privacy-minded** | Frames are processed in memory and never written to disk or recorded |
 
@@ -65,18 +65,22 @@ flowchart LR
 - **Streaming:** [`streamlit-webrtc`](https://github.com/whitphx/streamlit-webrtc) handles the peer connection. Each incoming `av.VideoFrame` goes to a callback on a worker thread, and the callback returns the processed frame.
 - **Shared, thread-safe models:** each model loads once with `st.cache_resource`, warms up on a dummy frame, and is shared by all visitors. A lock serializes calls into the model, because Ultralytics predictors aren't safe to call from several threads at once.
 - **Live settings:** Streamlit reruns the script when a slider changes, and `streamlit-webrtc` swaps in the new frame callback. The running stream picks up the new settings without reconnecting.
+- **Live dashboard:** the frame callback publishes FPS, latency and per-class counts to a lock-protected `LiveStats` object. A Streamlit fragment re-renders only the stats panel twice a second, so the rest of the page and the video stream are untouched.
 - **Separation of concerns:** UI code lives in `app.py`. The vision logic in `visionlab/` is plain Python and is unit tested without a browser or GPU.
 
 ## Project structure
 
 ```
 VisionLabAI/
-├── app.py                  # Streamlit UI: sidebar, live/photo/about tabs
+├── app.py                  # Streamlit app: sidebar, live/photo/about tabs
 ├── visionlab/
 │   ├── tasks.py            # Task registry (labels, descriptions, weights)
 │   ├── inference.py        # Thread-safe YOLO wrapper, latency + labels
 │   ├── filters.py          # OpenCV pencil-sketch filter
-│   └── overlay.py          # FPS meter, label summaries, HUD drawing
+│   ├── overlay.py          # FPS meter, label summaries, HUD drawing
+│   ├── live.py             # Thread-safe stats hand-off from video thread to UI
+│   ├── ui.py               # HTML components (hero, live panel, cards)
+│   └── style.css           # Custom theme and layout
 ├── tests/                  # pytest unit tests (run in GitHub Actions)
 ├── .streamlit/config.toml  # Theme
 ├── requirements.txt        # Runtime dependencies
